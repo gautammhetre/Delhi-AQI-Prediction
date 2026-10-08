@@ -1,0 +1,30 @@
+{% extends "predictor/base.html" %}
+{% block title %}Check your readings{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Check your own readings</h1>
+  <p>Have readings from a monitor or a report, but no PM2.5? Enter them here. We estimate PM2.5 with a model trained on Delhi data, then work out India's AQI and what to do.</p>
+</div>
+<div class="card">
+  <h2>Start from an example</h2>
+  <div class="chips scroll">
+    {% for p in presets %}<a class="chip {% if p.key == active_preset %}active{% endif %}" href="?example={{ p.key }}">{{ p.label }}</a>{% endfor %}
+  </div>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="notice warn">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+    <div class="form-grid">
+      {% for field in form %}
+        <div class="field{% if field.name == 'profile' %} full{% endif %}">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+          {{ field.errors }}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="form-actions"><button class="btn" type="submit">Check air quality</button></div>
+  </form>
+</div>
+<p class="source-note" style="margin-top:12px">Just want today's air quality? <a href="{% url 'now' %}">See live AQI for your location</a>.</p>
+{% endblock %}

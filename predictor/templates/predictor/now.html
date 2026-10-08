@@ -1,0 +1,131 @@
+{% extends "predictor/base.html" %}
+{% block title %}Air quality now{% endblock %}
+{% block content %}
+<h1 class="sr-only">Air quality now</h1>
+<div class="locbar">
+  <div class="search" role="combobox" aria-expanded="false" aria-owns="suggestions" aria-haspopup="listbox">
+    <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <label class="sr-only" for="place-search">Search a city or area</label>
+    <input id="place-search" type="search" placeholder="Search a city or area" autocomplete="off" aria-autocomplete="list" aria-controls="suggestions">
+    <ul class="suggestions" id="suggestions" role="listbox" hidden></ul>
+  </div>
+  <button class="btn ghost" type="button" id="use-location">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7"/></svg>
+    Use my location</button>
+</div>
+<div id="loc-status" role="status" aria-live="polite"></div>
+<form id="loc-form" hidden>{% csrf_token %}</form>
+
+<div id="report" aria-live="polite">
+  {% if error %}{% include "predictor/_report_error.html" %}{% else %}{% include "predictor/_report.html" %}{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const reportEl = document.getElementById('report');
+  const status = document.getElementById('loc-status');
+  const input = document.getElementById('place-search');
+  const list = document.getElementById('suggestions');
+  const combo = input.closest('.search');
+  const csrf = document.querySelector('#loc-form input[name=csrfmiddlewaretoken]').value;
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  };
+  let last = null;
+
+  function say(kind, text) { status.innerHTML = text ? '<div class="notice ' + kind + '">' + text + '</div>' : ''; }
+
+  function applyProfile() {
+    const p = store.get('aqi-profile') || 'general';
+    reportEl.querySelectorAll('[data-profile]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.profile === p)));
+    reportEl.querySelectorAll('[data-advice]').forEach(d => { d.hidden = d.dataset.advice !== p; });
+  }
+
+  async function load(place) {
+    last = place;
+    reportEl.classList.add('skeleton');
+    say('', '');
+    const body = new URLSearchParams({ lat: place.lat, lon: place.lon, label: place.label || '' });
+    try {
+      // Coordinates go in the POST body, not the URL, so they don't end up in logs or browser history.
+      const res = await fetch('{% url "report" %}', { method: 'POST', body, credentials: 'same-origin',
+        headers: { 'X-CSRFToken': csrf, 'Content-Type': 'application/x-www-form-urlencoded' } });
+      reportEl.innerHTML = await res.text();
+      if (res.ok) store.set('aqi-place', place);
+    } catch (e) {
+      say('warn', 'No connection. Check your internet and try again.');
+    } finally {
+      reportEl.classList.remove('skeleton');
+      applyProfile();
+    }
+  }
+
+  reportEl.addEventListener('click', e => {
+    const chip = e.target.closest('[data-profile]');
+    if (chip) { store.set('aqi-profile', chip.dataset.profile); applyProfile(); }
+    if (e.target.closest('[data-retry]')) { last ? load(last) : location.reload(); }
+  });
+
+  // My location
+  document.getElementById('use-location').addEventListener('click', function () {
+    const btn = this;
+    if (!('geolocation' in navigator)) return say('warn', "This browser can't share your location. Search for your city instead.");
+    if (!window.isSecureContext) return say('warn', 'Location only works on https:// pages. Search for your city instead.');
+    btn.disabled = true;
+    say('info', 'Finding your location…');
+    navigator.geolocation.getCurrentPosition(pos => {
+      btn.disabled = false;
+      load({ lat: +pos.coords.latitude.toFixed(3), lon: +pos.coords.longitude.toFixed(3), label: 'Your location' });
+    }, err => {
+      btn.disabled = false;
+      say('warn', err.code === 1 ? 'Location permission was denied. You can search for your city instead.' : "Couldn't get your location. Try searching for your city.");
+    }, { timeout: 10000, maximumAge: 600000 });
+  });
+
+  // City search with keyboard support
+  let timer, results = [], active = -1;
+  function render() {
+    combo.setAttribute('aria-expanded', String(!list.hidden));
+    list.innerHTML = results.length ? results.map((r, i) =>
+      `<li role="option" id="opt-${i}" aria-selected="${i === active}" data-i="${i}">${r.label.replace(/[<>&]/g, '')}</li>`).join('')
+      : '<li class="empty">No places found</li>';
+    if (active >= 0) input.setAttribute('aria-activedescendant', 'opt-' + active); else input.removeAttribute('aria-activedescendant');
+  }
+  function choose(i) {
+    const r = results[i]; if (!r) return;
+    list.hidden = true; combo.setAttribute('aria-expanded', 'false');
+    input.value = r.name; input.blur();
+    load({ lat: r.lat, lon: r.lon, label: r.label.split(',').slice(0, 2).join(',') });
+  }
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    const q = input.value.trim();
+    if (q.length < 2) { list.hidden = true; return; }
+    timer = setTimeout(async () => {
+      try {
+        const res = await fetch('{% url "api-places" %}?q=' + encodeURIComponent(q));
+        results = (await res.json()).results || []; active = results.length ? 0 : -1;
+        list.hidden = false; render();
+      } catch (e) { list.hidden = true; }
+    }, 250);
+  });
+  input.addEventListener('keydown', e => {
+    if (list.hidden) return;
+    if (e.key === 'ArrowDown') { active = Math.min(active + 1, results.length - 1); render(); e.preventDefault(); }
+    else if (e.key === 'ArrowUp') { active = Math.max(active - 1, 0); render(); e.preventDefault(); }
+    else if (e.key === 'Enter') { choose(active); e.preventDefault(); }
+    else if (e.key === 'Escape') { list.hidden = true; render(); }
+  });
+  list.addEventListener('mousedown', e => { const li = e.target.closest('[data-i]'); if (li) { e.preventDefault(); choose(+li.dataset.i); } });
+  input.addEventListener('blur', () => setTimeout(() => { list.hidden = true; combo.setAttribute('aria-expanded', 'false'); }, 150));
+
+  // Remember the last place and who the advice is for
+  const saved = store.get('aqi-place');
+  if (saved && saved.label && !(saved.lat === 28.61 && saved.lon === 77.21)) load(saved);
+  applyProfile();
+})();
+</script>
+{% endblock %}

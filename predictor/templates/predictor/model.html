@@ -1,0 +1,69 @@
+{% extends "predictor/base.html" %}
+{% load aqi_tags humanize %}
+{% block title %}How the model works{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>How good is the model?</h1>
+  {% if m %}
+  <p>Trained on {{ m.train.rows|intcomma }} hours ({{ m.train.from|slice:":10" }} to {{ m.train.to|slice:":10" }}) and tested on the
+     {{ m.test.rows|intcomma }} hours that came after ({{ m.test.from|slice:":10" }} to {{ m.test.to|slice:":10" }}). The test months were never seen in training,
+     which is how the model would be used in real life.</p>
+  {% endif %}
+</div>
+{% if not m %}
+  <div class="card"><p>No metrics yet. Run <code>python manage.py train_models</code>.</p></div>
+{% else %}
+<div class="card">
+  <h2>Model comparison on unseen months</h2>
+  <p class="sub">{{ m.selection_rule }}</p>
+  <div class="table-wrap"><table>
+    <tr><th>Model</th><th class="num">MAE <span class="unit">µg/m³</span></th><th class="num">RMSE</th><th class="num">R²</th><th class="num">Category accuracy</th><th class="num">Macro F1</th><th class="num">Within one category</th><th class="num">Size <span class="unit">MB</span></th></tr>
+    {% for r in rows %}
+      <tr class="{% if r.chosen %}chosen{% endif %}"><td>{{ r.name }}{% if r.chosen %} ✓{% endif %}</td>
+        <td class="num">{{ r.mae }}</td><td class="num">{{ r.rmse }}</td><td class="num">{{ r.r2 }}</td>
+        <td class="num">{{ r.category_accuracy|percent:1 }}</td><td class="num">{{ r.category_macro_f1 }}</td>
+        <td class="num">{{ r.within_one_category|percent:1 }}</td><td class="num">{% if r.size_mb < 0.1 %}&lt;0.1{% else %}{{ r.size_mb }}{% endif %}</td></tr>
+    {% endfor %}
+  </table></div>
+  <p class="muted" style="font-size:.85rem;margin-top:10px">MAE is the average error in µg/m³. The baseline assumes PM2.5 is a fixed share of PM10. Linear regression does not beat it; the tree models cut the error by about a third.</p>
+</div>
+
+<div class="grid halves" style="margin-top:18px">
+  <div class="card">
+    <h2>Which inputs matter</h2>
+    <p class="sub">Permutation importance: how much the error grows (µg/m³) when one input is shuffled.</p>
+    <div class="bars">
+      {% for i in importance %}
+        <div class="bar-row"><span>{{ i.feature }}</span><div class="bar-track"><div class="bar-fill accent" style="width: {{ i.pct }}%"></div></div><span class="val">{{ i.value }}</span></div>
+      {% endfor %}
+    </div>
+    <div class="notice" style="margin-top:14px">
+      <b>Is this just PM10?</b> PM2.5 is part of PM10, so PM10 dominates. Without PM10 the same model's error rises to
+      {{ m.ablation_without_pm10.mae }} µg/m³ (R² {{ m.ablation_without_pm10.r2 }}). So the other gases do carry signal, but PM10 is the key input.
+    </div>
+  </div>
+  <div class="card">
+    <h2>Confusion matrix (NAQI PM2.5 categories)</h2>
+    <p class="sub">Rows: actual category. Columns: predicted. Most mistakes are one band off.</p>
+    <div class="table-wrap"><table class="cm">
+      <tr><th><span class="sr-only">Actual \ predicted</span></th>{% for c in cm_columns %}<th title="{{ c.full }}"><abbr title="{{ c.full }}" style="text-decoration:none">{{ c.short }}</abbr></th>{% endfor %}</tr>
+      {% for row in matrix %}
+        <tr><th class="row">{{ row.label }}</th>
+          {% for c in row.cells %}<td style="background: rgba(47,91,211,{{ c.alpha|stringformat:'s' }}); color: {% if c.alpha > 0.55 %}#fff{% else %}inherit{% endif %}">{{ c.v }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </table></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <h2>Notes and limits</h2>
+  <ul>
+    <li>{{ m.note }}</li>
+    <li>The dataset's columns match OpenWeather's Air Pollution API, which publishes modelled estimates rather than CPCB station measurements. That likely explains the very tight PM2.5–PM10 relationship and some extreme values.</li>
+    <li>The test period ({{ m.test.from|slice:":7" }} to {{ m.test.to|slice:":7" }}) is mostly autumn and winter: {{ m.test_category_share.Severe|percent }} of test hours are Severe.</li>
+    <li>This estimates PM2.5 for the same hour; it is not a forecast.</li>
+  </ul>
+  <p class="muted">Retrain with <code>python manage.py train_models</code>. Last trained {{ m.trained_at }}.</p>
+</div>
+{% endif %}
+{% endblock %}

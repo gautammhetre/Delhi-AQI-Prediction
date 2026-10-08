@@ -1,0 +1,49 @@
+{% extends "predictor/base.html" %}
+{% load aqi_tags %}
+{% block title %}AQI {{ r.aqi.aqi }}{% endblock %}
+{% block content %}
+{% with cat=r.aqi.category ms=r.measures %}
+<p><a href="{% url 'check' %}">← Check other readings</a></p>
+<div class="stack">
+  {% include "predictor/_aqi_hero.html" with aqi=r.aqi.aqi title="Your readings" subtitle="Estimated from the values you entered" prominent=r.aqi.prominent_label %}
+
+  {% if r.aqi.prominent == 'o3' or r.aqi.prominent == 'co' %}<div class="notice warn">{{ r.aqi.prominent_label }} sets this AQI, but its official band is for an 8-hour average. One hour of readings can make it look worse than it is.</div>{% endif %}
+  {% for w in r.warnings %}<div class="notice warn">{{ w }}</div>{% endfor %}
+
+  <section class="card">
+    <h2>What to do</h2>
+    <p class="advice-main">{{ ms.you }}</p>
+    {% if ms.you_are_vulnerable %}<p class="muted">For everyone else: {{ ms.general_public }}</p>{% endif %}
+    {% if ms.home_steps %}<ul class="steps-list">{% for s in ms.home_steps %}<li>{{ s }}</li>{% endfor %}</ul>{% endif %}
+    {% if ms.grap %}<div class="grap-box"><b>In Delhi-NCR this level means GRAP {{ ms.grap.0.stage }}:</b> {{ ms.grap.0.measures|join:"; " }}.</div>{% endif %}
+    {% if r.explanation.mode == 'llm' %}
+      <details class="more"><summary>Explained in plain words</summary><p class="explain">{{ r.explanation.text }}</p></details>
+    {% endif %}
+    <p class="source-note"><a href="{% url 'guide' %}?category={{ cat.name|urlencode }}">See what to do at every level →</a></p>
+  </section>
+
+  <section class="card">
+    <h2>Pollutant scores</h2>
+    <div class="bars">
+      {% for p, v in r.aqi.sub_indices.items %}
+        <div class="bar-row"><span>{{ p|pollutant_label }}</span>
+          <div class="bar-track"><div class="bar-fill bg-{{ v|aqi_slug }}" style="width: {{ v|pct_of:500 }}%"></div></div>
+          <span class="val">{{ v }}</span></div>
+      {% endfor %}
+    </div>
+    <p class="source-note">Estimated PM2.5: <b>{{ r.pm25 }} µg/m³</b> (typically within about {{ r.typical_error_ugm3|floatformat:0 }} µg/m³ of the real value).</p>
+    <details class="more"><summary>How PM2.5 was estimated</summary>
+      <p class="muted">Each bar shows how much one reading moved the estimate compared with a typical Delhi hour.</p>
+      {% for c in r.contributions %}
+        <div class="div-row"><span>{{ c.label }}</span>
+          <div class="div-neg">{% if c.effect < 0 %}<span style="width: {{ c.effect|absval|pct_of:r.pm25 }}%"></span>{% endif %}</div>
+          <div class="div-pos">{% if c.effect > 0 %}<span style="width: {{ c.effect|pct_of:r.pm25 }}%"></span>{% endif %}</div>
+          <span class="val">{% if c.effect > 0 %}+{% endif %}{{ c.effect }}</span></div>
+      {% endfor %}
+      <div class="legend"><span><i style="background:var(--lower)"></i>lowered it</span><span><i style="background:var(--raise)"></i>raised it</span></div>
+      <p class="source-note"><a href="{% url 'model' %}">How accurate is the model?</a></p>
+    </details>
+  </section>
+</div>
+{% endwith %}
+{% endblock %}

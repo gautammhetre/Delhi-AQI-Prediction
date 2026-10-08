@@ -1,0 +1,58 @@
+{% load aqi_tags %}
+{% with cat=rep.aqi.category %}
+<div class="stack" data-place-label="{{ rep.place.label }}" data-place-lat="{{ rep.place.lat }}" data-place-lon="{{ rep.place.lon }}">
+  {% include "predictor/_aqi_hero.html" with aqi=rep.aqi.aqi title=rep.place.label subtitle="Updated "|add:rep.updated_display prominent=rep.aqi.prominent_label %}
+
+  <section class="card" aria-labelledby="todo-h">
+    <h2 id="todo-h">What to do</h2>
+    <div class="chips scroll" role="group" aria-label="Who is this for?">
+      {% for key, label in profiles %}<button class="chip" type="button" data-profile="{{ key }}" aria-pressed="{% if key == 'general' %}true{% else %}false{% endif %}">{{ label }}</button>{% endfor %}
+    </div>
+    {% for key, label in profiles %}{% with a=advice|get:key %}
+      <div class="advice" data-advice="{{ key }}" {% if key != 'general' %}hidden{% endif %}>
+        <p class="advice-main">{{ a.you }}</p>
+        {% if a.home_steps %}<ul class="steps-list">{% for s in a.home_steps %}<li>{{ s }}</li>{% endfor %}</ul>{% endif %}
+      </div>
+    {% endwith %}{% endfor %}
+    {% with g=advice.general.grap %}{% if g and rep.place.in_delhi_ncr %}
+      <div class="grap-box"><b>Delhi-NCR, GRAP {{ g.0.stage }}:</b> {{ g.0.measures|join:"; " }}. <span class="muted">Applies when CAQM invokes it.</span></div>
+    {% endif %}{% endwith %}
+    <p class="source-note">Advice from the Health Ministry's air-pollution advisory. <a href="{% url 'guide' %}?category={{ cat.name|urlencode }}">See every level →</a></p>
+  </section>
+
+  {% if rep.outlook %}
+  <section class="card" aria-labelledby="outlook-h">
+    <h2 id="outlook-h">Next 24 hours</h2>
+    {% if rep.best_window %}
+      <div class="best-time"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <div><b>Best time to be outside: {{ rep.best_window.from }} – {{ rep.best_window.to }}</b><br><span class="muted">Expected around AQI {{ rep.best_window.aqi }} ({{ rep.best_window.category }}){% if rep.worst_hour %}. Worst around {{ rep.worst_hour.hour }} (AQI {{ rep.worst_hour.aqi }}).{% endif %}</span></div></div>
+    {% endif %}
+    <ol class="outlook" aria-label="Expected AQI for each of the next 24 hours">
+      {% for o in rep.outlook %}<li class="{% if rep.best_window and o.hour == rep.best_window.from %}best{% endif %}" style="--cat: {{ o.category|cat_var }}; height: {{ o.aqi|pct_of:rep.outlook_peak }}%" tabindex="0" data-tip="{{ o.hour }} · {{ o.aqi }} {{ o.category }}" aria-label="{{ o.hour }}: AQI {{ o.aqi }}, {{ o.category }}"></li>{% endfor %}
+    </ol>
+    <div class="outlook-axis">{% for o in rep.outlook %}{% if forloop.counter0|divisibleby:6 %}<span style="left: {% widthratio forloop.counter0 rep.outlook|length 100 %}%">{{ o.hour }}</span>{% endif %}{% endfor %}</div>
+    <details class="more"><summary>Hour by hour</summary>
+      <div class="table-wrap"><table><tr><th>Time</th><th class="num">AQI</th><th>Level</th></tr>
+        {% for o in rep.outlook %}<tr><td>{{ o.hour }}</td><td class="num">{{ o.aqi }}</td><td>{{ o.category }}</td></tr>{% endfor %}</table></div>
+    </details>
+    <p class="source-note">Forecast levels use each hour's PM2.5 and PM10, so they're indicative.</p>
+  </section>
+  {% endif %}
+
+  <section class="card" aria-labelledby="pol-h">
+    <h2 id="pol-h">Pollutants</h2>
+    <div class="tiles">
+      {% for p in rep.pollutants %}
+        <div class="tile" style="--cat: {{ p.category|cat_var }}">
+          <div class="k">{{ p.label }}</div>
+          <div class="v">{{ p.value }}<small> {{ p.unit }}</small></div>
+          <div class="bar"><i style="width: {{ p.sub_index|pct_of:500 }}%"></i></div>
+          <div class="w"><span class="dot"></span>{{ p.category }} · score {{ p.sub_index }}</div>
+        </div>
+      {% endfor %}
+    </div>
+    <p class="source-note">The AQI is the highest of these scores (0–500), following CPCB's method: 24-hour averages for particles, NO₂ and SO₂; 8-hour for ozone and CO.
+      Data: <a href="{{ rep.source.url }}" target="_blank" rel="noopener">{{ rep.source.name }}</a>, modelled rather than measured at a station.</p>
+  </section>
+</div>
+{% endwith %}

@@ -1,0 +1,152 @@
+{
+  "trained_at": "2026-10-07 20:10",
+  "rows": 18776,
+  "date_range": [
+    "2020-11-25 06:30:00",
+    "2023-01-24 13:30:00"
+  ],
+  "train": {
+    "rows": 15020,
+    "from": "2020-11-25 06:30:00",
+    "to": "2022-08-18 01:30:00"
+  },
+  "test": {
+    "rows": 3756,
+    "from": "2022-08-18 02:30:00",
+    "to": "2023-01-24 13:30:00"
+  },
+  "models": {
+    "PM10 ratio (baseline)": {
+      "mae": 16.25,
+      "rmse": 23.13,
+      "r2": 0.99,
+      "category_accuracy": 0.888,
+      "category_macro_f1": 0.819,
+      "within_one_category": 0.999,
+      "train_seconds": 0.0,
+      "size_mb": 0.0
+    },
+    "Linear regression": {
+      "mae": 17.55,
+      "rmse": 23.61,
+      "r2": 0.989,
+      "category_accuracy": 0.861,
+      "category_macro_f1": 0.767,
+      "within_one_category": 1.0,
+      "train_seconds": 0.2,
+      "size_mb": 0.0
+    },
+    "Random forest": {
+      "mae": 10.71,
+      "rmse": 16.11,
+      "r2": 0.995,
+      "category_accuracy": 0.932,
+      "category_macro_f1": 0.894,
+      "within_one_category": 0.999,
+      "train_seconds": 4.6,
+      "size_mb": 19.55
+    },
+    "Gradient boosting": {
+      "mae": 11.01,
+      "rmse": 17.11,
+      "r2": 0.994,
+      "category_accuracy": 0.93,
+      "category_macro_f1": 0.892,
+      "within_one_category": 1.0,
+      "train_seconds": 0.6,
+      "size_mb": 0.4
+    }
+  },
+  "best_model": "Gradient boosting",
+  "selection_rule": "Lowest test MAE among real models; a smaller model within 5% of that MAE is preferred.",
+  "ablation_without_pm10": {
+    "features": [
+      "co",
+      "no",
+      "no2",
+      "o3",
+      "so2",
+      "nh3"
+    ],
+    "mae": 36.43,
+    "r2": 0.945
+  },
+  "permutation_importance_mae": {
+    "pm10": 214.95,
+    "co": 25.5,
+    "nh3": 11.23,
+    "o3": 3.95,
+    "no2": 2.35,
+    "so2": 1.97,
+    "no": 1.55
+  },
+  "confusion_matrix": {
+    "labels": [
+      "Good",
+      "Satisfactory",
+      "Moderate",
+      "Poor",
+      "Very Poor",
+      "Severe"
+    ],
+    "matrix": [
+      [
+        168,
+        20,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        19,
+        310,
+        17,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        16,
+        223,
+        17,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        31,
+        240,
+        20,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        49,
+        989,
+        42
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        30,
+        1564
+      ]
+    ]
+  },
+  "test_category_share": {
+    "Good": 0.05,
+    "Satisfactory": 0.092,
+    "Moderate": 0.068,
+    "Poor": 0.077,
+    "Very Poor": 0.288,
+    "Severe": 0.424
+  },
+  "note": "Categories use NAQI PM2.5 breakpoints on hourly values (the official index uses 24-hour averages). Timestamps converted from UTC to IST."
+}

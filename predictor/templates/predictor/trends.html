@@ -1,0 +1,120 @@
+{% extends "predictor/base.html" %}
+{% load aqi_tags humanize %}
+{% block title %}Delhi trends{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Delhi's air, {{ d.coverage.from }} to {{ d.coverage.to }}</h1>
+  <p>{{ d.coverage.hours|intcomma }} hourly readings (IST). PM2.5 in µg/m³. Categories use India's NAQI PM2.5 bands on hourly values.</p>
+</div>
+
+<div class="grid kpis">
+  <div class="card kpi"><div class="k">Average PM2.5</div><div class="v">{{ d.overall_mean }}</div><div class="s">µg/m³ across the period</div></div>
+  <div class="card kpi"><div class="k">Versus WHO</div><div class="v">{% widthratio d.overall_mean d.who_24h_guideline 1 %}×</div><div class="s">the 24-hour guideline of {{ d.who_24h_guideline }}</div></div>
+  <div class="card kpi"><div class="k">Severe hours</div><div class="v">{{ d.category_share.Severe|percent }}</div><div class="s">of all hours</div></div>
+  <div class="card kpi"><div class="k">Good hours</div><div class="v">{{ d.category_share.Good|percent }}</div><div class="s">of all hours</div></div>
+</div>
+
+<div class="card" style="margin-top:18px">
+  <h2>Monthly average PM2.5</h2>
+  <p class="sub">Every winter peaks; the monsoon months are the cleanest. Dashed green line: WHO 24-hour guideline.</p>
+  <div class="chart-box"><canvas id="monthly" aria-label="Monthly average PM2.5 line chart" role="img"></canvas></div>
+</div>
+
+<div class="grid halves" style="margin-top:18px">
+  <div class="card">
+    <h2>By month of year</h2>
+    <p class="sub">October to February is the polluted season (stubble burning, cold still air).</p>
+    <div class="chart-box"><canvas id="moy" aria-label="Average PM2.5 by month of year" role="img"></canvas></div>
+    <details style="margin-top:10px"><summary class="muted">Show the numbers</summary>
+      <table><tr><th>Month</th><th class="num">Mean PM2.5</th></tr>
+      {% for label in d.month_of_year.labels %}<tr><td>{{ label }}</td><td class="num">{{ d.month_of_year.values|index:forloop.counter0 }}</td></tr>{% endfor %}</table>
+    </details>
+  </div>
+  <div class="card">
+    <h2>By hour of day</h2>
+    <p class="sub">Worst late at night, cleanest early afternoon when the air mixes most.</p>
+    <div class="chart-box"><canvas id="hod" aria-label="Average PM2.5 by hour of day, winter and summer" role="img"></canvas></div>
+    <details style="margin-top:10px"><summary class="muted">Show the numbers</summary>
+      <table><tr><th>Hour (IST)</th><th class="num">Winter</th><th class="num">Summer</th></tr>
+      {% for label in d.hour_of_day.labels %}<tr><td>{{ label }}</td><td class="num">{{ d.hour_of_day.winter|index:forloop.counter0 }}</td><td class="num">{{ d.hour_of_day.summer|index:forloop.counter0 }}</td></tr>{% endfor %}</table>
+    </details>
+  </div>
+</div>
+
+<div class="grid halves" style="margin-top:18px">
+  <div class="card">
+    <h2>Share of hours by category</h2>
+    <div class="bars" style="margin-top:12px">
+      {% for name, share in d.category_share.items %}
+        <div class="bar-row" style="grid-template-columns:100px 1fr 54px"><span>{{ name }}</span>
+          <div class="bar-track"><div class="bar-fill bg-{{ name|cat_slug }}" style="width: {{ share|pct_of:1 }}%"></div></div>
+          <span class="val">{{ share|percent }}</span></div>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="card">
+    <h2>Worst days</h2>
+    <table>
+      <tr><th>Date</th><th class="num">Daily mean PM2.5</th></tr>
+      {% for w in d.worst_days %}<tr><td>{{ w.date }}</td><td class="num">{{ w.mean_pm25 }}</td></tr>{% endfor %}
+    </table>
+    <h3 style="margin-top:18px">Diwali</h3>
+    <table>
+      <tr><th>Year</th><th class="num">Diwali day</th><th class="num">Day after</th><th class="num">Month average</th></tr>
+      {% for x in d.diwali %}<tr><td>{{ x.date }}</td><td class="num">{{ x.diwali_day }}</td><td class="num">{{ x.day_after }}</td><td class="num">{{ x.month_average }}</td></tr>{% endfor %}
+    </table>
+    <p class="muted" style="font-size:.85rem;margin-top:8px">2021 was far above its month; 2022 was below it. Weather that week matters as much as firecrackers.</p>
+  </div>
+</div>
+
+{{ d|json_script:"dash-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const d = JSON.parse(document.getElementById('dash-data').textContent);
+  if (!window.Chart) {
+    document.querySelectorAll('.chart-box').forEach(b => b.innerHTML = '<p class="muted">Charts need internet access to load Chart.js. The numbers are in the tables below.</p>');
+    return;
+  }
+  const charts = [];
+  function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function build() {
+    charts.splice(0).forEach(c => c.destroy());
+    const ink2 = css('--ink-2'), grid = css('--grid'), s1 = css('--series-1'), s2 = css('--series-2'), guide = css('--guide');
+    Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+    Chart.defaults.color = ink2;
+    Chart.defaults.borderColor = grid;
+    const tooltip = { backgroundColor: css('--surface-2'), titleColor: css('--ink'), bodyColor: css('--ink'),
+                      borderColor: css('--line'), borderWidth: 1, padding: 10,
+                      callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y} µg/m³` } };
+    const opts = (legend) => ({
+      responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+      plugins: { legend: legend ? { display: true, position: 'bottom', labels: { boxWidth: 12, color: ink2 } } : { display: false }, tooltip },
+      scales: { x: { grid: { display: false }, ticks: { color: ink2 } },
+                y: { grid: { color: grid }, beginAtZero: true, ticks: { color: ink2 }, title: { display: true, text: 'PM2.5 µg/m³', color: ink2 } } } });
+    const who = n => ({ label: 'WHO 24-h guideline', data: Array(n).fill(d.who_24h_guideline), borderColor: guide,
+                        borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0 });
+
+    charts.push(new Chart(document.getElementById('monthly'), { type: 'line', options: opts(true), data: {
+      labels: d.monthly_series.labels, datasets: [
+        { label: 'Monthly mean', data: d.monthly_series.values, borderColor: s1, backgroundColor: s1, borderWidth: 2, pointRadius: 4, pointHoverRadius: 6, tension: .25 },
+        who(d.monthly_series.labels.length) ] } }));
+
+    charts.push(new Chart(document.getElementById('moy'), { type: 'bar', options: opts(false), data: {
+      labels: d.month_of_year.labels, datasets: [
+        { label: 'Mean', data: d.month_of_year.values, backgroundColor: s1, borderRadius: { topLeft: 4, topRight: 4 }, borderSkipped: 'bottom', maxBarThickness: 28 } ] } }));
+
+    charts.push(new Chart(document.getElementById('hod'), { type: 'line', options: opts(true), data: {
+      labels: d.hour_of_day.labels, datasets: [
+        { label: 'Winter (Nov–Jan)', data: d.hour_of_day.winter, borderColor: s1, backgroundColor: s1, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: .3 },
+        { label: 'Summer (Jun–Aug)', data: d.hour_of_day.summer, borderColor: s2, backgroundColor: s2, borderWidth: 2, pointRadius: 0, pointHoverRadius: 5, tension: .3 } ] } }));
+  }
+  build();
+  document.addEventListener('themechange', build);
+})();
+</script>
+{% endblock %}

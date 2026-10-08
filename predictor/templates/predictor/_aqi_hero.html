@@ -1,0 +1,17 @@
+{% load aqi_tags %}
+<section class="hero" style="--cat: {{ cat.name|cat_var }}" aria-label="Air quality">
+  <div class="hero-gauge">
+    <svg viewBox="0 0 120 120" role="img" aria-label="AQI {{ aqi }} out of 500, {{ cat.name }}">
+      <circle class="track" cx="60" cy="60" r="52" stroke-dasharray="{% gauge_track %}" transform="rotate(135 60 60)"/>
+      <circle class="value" cx="60" cy="60" r="52" stroke-dasharray="{{ aqi|gauge_dash }}" transform="rotate(135 60 60)"/>
+    </svg>
+    <div class="hero-num"><span class="num">{{ aqi }}</span><span class="unit">AQI</span></div>
+  </div>
+  <div class="hero-text">
+    <div class="hero-place">{{ title }}</div>
+    {% if subtitle %}<div class="hero-sub">{{ subtitle }}</div>{% endif %}
+    <div class="pill">{{ cat.name }}</div>
+    <p class="hero-lead">{{ cat.health }}</p>
+    <p class="hero-driver">Main pollutant: <b>{{ prominent }}</b></p>
+  </div>
+</section>

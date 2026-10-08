@@ -1,0 +1,217 @@
+[
+  {
+    "question": "Is it safe for my kids to play outside when the AQI is very poor?",
+    "expected": [
+      "health_advisory#outdoor-exercise-walking-and-jogging-on-polluted",
+      "health_advisory#who-is-most-vulnerable-to-air-pollution"
+    ]
+  },
+  {
+    "question": "Can I go jogging in the morning?",
+    "expected": [
+      "health_advisory#outdoor-exercise-walking-and-jogging-on-polluted"
+    ]
+  },
+  {
+    "question": "Should I wear an N95 mask?",
+    "expected": [
+      "health_advisory#masks-and-n95-respirators"
+    ]
+  },
+  {
+    "question": "Does a cloth mask protect against pollution?",
+    "expected": [
+      "health_advisory#masks-and-n95-respirators"
+    ]
+  },
+  {
+    "question": "When should I open the windows to air out my flat?",
+    "expected": [
+      "health_advisory#opening-windows-and-ventilating-the-home"
+    ]
+  },
+  {
+    "question": "Who is most at risk from air pollution?",
+    "expected": [
+      "health_advisory#who-is-most-vulnerable-to-air-pollution"
+    ]
+  },
+  {
+    "question": "What symptoms mean I should see a doctor?",
+    "expected": [
+      "health_advisory#symptoms-to-watch-and-when-to-see-a-doctor"
+    ]
+  },
+  {
+    "question": "What happens under GRAP Stage III?",
+    "expected": [
+      "grap_stages#grap-stage-iii-severe-air-quality-aqi-401-to-450"
+    ]
+  },
+  {
+    "question": "Are schools closed when GRAP stage 4 is in force?",
+    "expected": [
+      "grap_stages#grap-stage-iv-severe-air-quality-aqi-above-450"
+    ]
+  },
+  {
+    "question": "Is construction banned when air quality is poor?",
+    "expected": [
+      "grap_stages#grap-stage-i-poor-air-quality-aqi-201-to-300",
+      "grap_stages#grap-stage-iii-severe-air-quality-aqi-401-to-450"
+    ]
+  },
+  {
+    "question": "Can diesel generators be used at very poor AQI?",
+    "expected": [
+      "grap_stages#grap-stage-ii-very-poor-air-quality-aqi-301-to-4"
+    ]
+  },
+  {
+    "question": "What is the Graded Response Action Plan?",
+    "expected": [
+      "grap_stages#what-grap-is"
+    ]
+  },
+  {
+    "question": "How is the overall AQI calculated from different pollutants?",
+    "expected": [
+      "naqi_categories#how-the-aqi-number-is-calculated"
+    ]
+  },
+  {
+    "question": "What does a Severe AQI mean for healthy people?",
+    "expected": [
+      "naqi_categories#severe-aqi-401-to-500"
+    ]
+  },
+  {
+    "question": "What is the health impact of moderate air quality?",
+    "expected": [
+      "naqi_categories#moderate-aqi-101-to-200"
+    ]
+  },
+  {
+    "question": "What PM2.5 level counts as satisfactory in India?",
+    "expected": [
+      "naqi_breakpoints#pm2-5-breakpoints-24-hour-average-g-m"
+    ]
+  },
+  {
+    "question": "Why is carbon monoxide in mg/m3 instead of µg/m3?",
+    "expected": [
+      "naqi_breakpoints#co-breakpoints-8-hour-average-mg-m"
+    ]
+  },
+  {
+    "question": "What is the WHO guideline for PM2.5?",
+    "expected": [
+      "who_guidelines#who-guideline-values-for-particulate-matter"
+    ]
+  },
+  {
+    "question": "How far is Delhi above the WHO limit?",
+    "expected": [
+      "who_guidelines#how-delhi-compares-with-the-who-guideline"
+    ]
+  },
+  {
+    "question": "Which months have the worst pollution in Delhi?",
+    "expected": [
+      "delhi_patterns#which-months-have-the-worst-air-in-delhi"
+    ]
+  },
+  {
+    "question": "What time of day is the air worst?",
+    "expected": [
+      "delhi_patterns#what-time-of-day-pollution-is-worst"
+    ]
+  },
+  {
+    "question": "Did Diwali firecrackers make the air worse?",
+    "expected": [
+      "delhi_patterns#diwali-and-air-quality-in-the-data",
+      "health_advisory#things-to-avoid-burning"
+    ]
+  },
+  {
+    "question": "How accurate is your prediction model?",
+    "expected": [
+      "about_app#how-accurate-the-prediction-is"
+    ]
+  },
+  {
+    "question": "Is this a forecast of tomorrow's air quality?",
+    "expected": [
+      "about_app#limits-of-this-app"
+    ]
+  },
+  {
+    "question": "Do air purifiers help?",
+    "expected": [
+      "air_cleaners#do-air-purifiers-help-with-indoor-pollution"
+    ]
+  },
+  {
+    "question": "Are ionizer air cleaners safe?",
+    "expected": [
+      "air_cleaners#ozone-generating-air-purifiers"
+    ]
+  },
+  {
+    "question": "Which air purifier brand should I buy?",
+    "expected": [
+      "air_cleaners#how-to-choose-an-air-purifier-for-a-room"
+    ]
+  },
+  {
+    "question": "What measures should I take when the AQI is poor?",
+    "expected": [
+      "aqi_actions#what-to-do-when-the-aqi-is-poor"
+    ]
+  },
+  {
+    "question": "What should elderly people do at very poor AQI?",
+    "expected": [
+      "aqi_actions#what-to-do-when-the-aqi-is-very-poor"
+    ]
+  },
+  {
+    "question": "Is it okay to exercise outside when the AQI is moderate?",
+    "expected": [
+      "aqi_actions#what-to-do-when-the-aqi-is-moderate",
+      "health_advisory#outdoor-exercise-walking-and-jogging-on-polluted"
+    ]
+  },
+  {
+    "question": "Do I need any precautions at satisfactory AQI?",
+    "expected": [
+      "aqi_actions#what-to-do-when-the-aqi-is-good-or-satisfactory",
+      "naqi_categories#satisfactory-aqi-51-to-100"
+    ]
+  },
+  {
+    "question": "Who won the cricket match yesterday?",
+    "expected": []
+  },
+  {
+    "question": "What is the share price of Reliance today?",
+    "expected": []
+  },
+  {
+    "question": "Give me a recipe for paneer tikka",
+    "expected": []
+  },
+  {
+    "question": "How do I renew my passport?",
+    "expected": []
+  },
+  {
+    "question": "What is the capital of Australia?",
+    "expected": []
+  },
+  {
+    "question": "Suggest a good movie to watch tonight",
+    "expected": []
+  }
+]

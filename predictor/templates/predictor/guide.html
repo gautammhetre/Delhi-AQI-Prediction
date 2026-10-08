@@ -1,0 +1,43 @@
+{% extends "predictor/base.html" %}
+{% load aqi_tags %}
+{% block title %}What to do at each AQI level{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>What to do at each AQI level</h1>
+  <p>Advice for you comes from the Health Ministry. Rules for Delhi-NCR come from the government's emergency plan (GRAP).
+     <b>Vulnerable</b> means {{ vulnerable }}.</p>
+</div>
+
+<div class="level-list">
+  {% for row in rows %}
+    <article class="level{% if row.category == highlight %} chosen{% endif %}" id="{{ row.category|cat_slug }}" style="--cat: {{ row.category|cat_var }}">
+      <header><span>{{ row.category }}</span><span>AQI {{ row.aqi_range.0 }}–{{ row.aqi_range.1 }}</span></header>
+      <div class="body">
+        <div><div class="k">Everyone</div>{{ row.general_public }}</div>
+        <div><div class="k">Vulnerable groups</div>{{ row.vulnerable_groups }}</div>
+        <div><div class="k">Delhi-NCR rules</div>{% if row.grap %}{% for g in row.grap %}GRAP {{ g.stage }} (AQI {{ g.aqi_range.0 }}–{{ g.aqi_range.1 }}){% if not forloop.last %}<br>{% endif %}{% endfor %}{% else %}<span class="muted">None</span>{% endif %}</div>
+      </div>
+    </article>
+  {% endfor %}
+</div>
+
+<div class="grid halves" style="margin-top:16px">
+  <section class="card">
+    <h2>At home and outdoors</h2>
+    <ul class="steps-list">
+      {% for start, text in home_steps %}<li>{{ text }} <span class="muted" style="font-size:.8rem">(from {% if start == 2 %}Moderate{% else %}Poor{% endif %})</span></li>{% endfor %}
+    </ul>
+  </section>
+  <section class="card">
+    <h2>GRAP stages in Delhi-NCR</h2>
+    <p class="sub">Each stage keeps the rules of the stages below it. CAQM decides when to invoke a stage.</p>
+    {% for row in rows %}{% for g in row.grap %}
+      <h3 style="margin-top:12px">{{ g.stage }} · {{ g.label }} <span class="muted" style="font-weight:400">(AQI {{ g.aqi_range.0 }}–{{ g.aqi_range.1 }})</span></h3>
+      <ul class="steps-list">{% for m in g.measures %}<li>{{ m }}</li>{% endfor %}</ul>
+    {% endfor %}{% endfor %}
+  </section>
+</div>
+
+<p class="source-note" style="margin-top:14px">Sources: <a href="{{ advisory.url }}" target="_blank" rel="noopener">{{ advisory.title }}</a> ({{ advisory.source }}) ·
+  <a href="{{ grap_source.url }}" target="_blank" rel="noopener">{{ grap_source.title }}</a>. General guidance, not medical advice.</p>
+{% endblock %}

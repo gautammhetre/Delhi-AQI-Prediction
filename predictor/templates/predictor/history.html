@@ -1,0 +1,30 @@
+{% extends "predictor/base.html" %}
+{% load aqi_tags %}
+{% block title %}History{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Prediction history</h1>
+  <p>Every estimate made on the website or through the API is stored in the database (Django ORM). Also at <code>GET /api/v1/history</code> and in the admin panel.</p>
+</div>
+<div class="card">
+  {% if db_error %}
+    <div class="notice warn">{{ db_error }}</div>
+  {% elif page.object_list %}
+  <div class="table-wrap"><table>
+    <tr><th>When</th><th>Source</th><th class="num">AQI</th><th>Category</th><th>Prominent</th><th class="num">PM2.5 est.</th><th class="num">PM10</th></tr>
+    {% for p in page.object_list %}
+      <tr><td>{{ p.created_at|date:"d M Y, H:i" }}</td><td>{{ p.get_source_display }}</td><td class="num">{{ p.aqi }}</td>
+        <td><span class="tag bg-{{ p.category|cat_slug }}">{{ p.category }}</span></td><td>{{ p.prominent|pollutant_label }}</td>
+        <td class="num">{{ p.predicted_pm25 }}</td><td class="num">{{ p.pm10 }}</td></tr>
+    {% endfor %}
+  </table></div>
+  <div class="pager">
+    {% if page.has_previous %}<a class="btn ghost" href="?page={{ page.previous_page_number }}">← Newer</a>{% endif %}
+    <span class="muted">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a class="btn ghost" href="?page={{ page.next_page_number }}">Older →</a>{% endif %}
+  </div>
+  {% else %}
+    <p>No predictions yet. <a href="{% url 'check' %}">Make one</a>.</p>
+  {% endif %}
+</div>
+{% endblock %}

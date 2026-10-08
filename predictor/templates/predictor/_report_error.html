@@ -1,0 +1,5 @@
+<div class="card" role="alert">
+  <h2>Couldn't load live air quality</h2>
+  <p class="muted">{{ error }}. Please try again in a minute{% if not hide_check %}, or <a href="{% url 'check' %}">enter readings yourself</a>{% endif %}.</p>
+  <button class="btn ghost" type="button" data-retry>Try again</button>
+</div>

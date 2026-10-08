@@ -1,0 +1,14 @@
+{
+  "name": "Delhi AQI: live air quality",
+  "short_name": "Delhi AQI",
+  "description": "Live AQI, health advice and what to do, for any place in India.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111317",
+  "theme_color": "#111317",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
+}

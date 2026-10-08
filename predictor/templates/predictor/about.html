@@ -1,0 +1,43 @@
+{% extends "predictor/base.html" %}
+{% load aqi_tags %}
+{% block title %}About{% endblock %}
+{% block content %}
+<div class="page-head"><h1>About Delhi AQI</h1>
+  <p>Live air quality for any place in India, explained in plain language, with what to do about it.</p></div>
+
+<div class="stack">
+  <section class="card">
+    <h2>Where the numbers come from</h2>
+    <ul class="steps-list">
+      <li><b>Live readings:</b> <a href="https://open-meteo.com/en/docs/air-quality-api" target="_blank" rel="noopener">Open-Meteo Air Quality</a> (Copernicus CAMS model). These are modelled values for your area, not a ground monitoring station, so they can differ from CPCB station readings.</li>
+      <li><b>AQI:</b> India's National Air Quality Index (CPCB). Particles, NO₂ and SO₂ use 24-hour averages; ozone and CO use 8-hour averages. The AQI is the highest pollutant score.</li>
+      <li><b>What to do:</b> the Health Ministry's <a href="https://ncdc.mohfw.gov.in/wp-content/uploads/2024/07/Enclosure-Air-Pollution-Health-Advisory-Oct-2023.pdf" target="_blank" rel="noopener">air-pollution advisory</a> and CAQM's <a href="https://caqm.nic.in/" target="_blank" rel="noopener">GRAP</a> for Delhi-NCR.</li>
+      <li><b>Check your readings:</b> a machine-learning model estimates PM2.5 from other pollutants{% if m %}. On five months of data it never saw, it was typically within {{ m.models|get:m.best_model|get:"mae"|floatformat:0 }} µg/m³ and picked the right AQI category {% widthratio m.models|get:m.best_model|get:"category_accuracy" 1 100 %}% of the time{% endif %}. <a href="{% url 'model' %}">How the model works</a>.</li>
+      <li><b>Delhi trends:</b> hourly readings for Delhi from November 2020 to January 2023.</li>
+    </ul>
+  </section>
+
+  <section class="card" id="privacy">
+    <h2>Privacy</h2>
+    <ul class="steps-list">
+      <li>"Use my location" asks your browser for permission. Your coordinates are rounded to about 1 km and used only to fetch readings. They're never put in a web address or saved to our database; the server keeps the readings for that rounded spot in memory for up to 10 minutes so repeat visits are fast.</li>
+      <li>Your last place, theme and "who is this for" choice are remembered in your own browser only.</li>
+      <li>Readings you enter on Check are saved without any personal details, so we can review how the tool is used. They're not shown to other visitors.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Limits</h2>
+    <ul class="steps-list">
+      <li>This is general guidance, not medical advice. If you have symptoms, see a doctor.</li>
+      <li>The estimate model was trained on Delhi data, so it's less reliable elsewhere.</li>
+      <li>GRAP rules change from time to time; CAQM's website has the version in force.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>For developers</h2>
+    <p>Everything on this site is also available through a REST API: <a href="{% url 'swagger' %}">interactive API docs</a>.</p>
+  </section>
+</div>
+{% endblock %}
